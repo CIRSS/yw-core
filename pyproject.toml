@@ -1,13 +1,21 @@
 [project]
-name = "yw_generator"
+name = "yw-core"
 dynamic = ["version", "scripts"]
-authors = [
+dependencies = [
+    "nbformat", 
+    "click"
 ]
-description = "A template project for YesWorkflow syntax generator"
+authors = [
+    {name = "Meng Li"},
+    {name = "Timothy M. McPhillips"},
+    {name = "Shin-Rong Tsai"},
+    {name = "Bertram Ludäscher"}
+]
+description = "Essential elements of YesWorkflow"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "MIT"
 requires-python = ">=3.7"
-keywords = ["yesworkflow"]
+keywords = ["yesworkflow", "yw", "scientific", "provenance", "python"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -16,14 +24,11 @@ classifiers = [
     "Programming Language :: Python :: 3"
 ]
 
-[tool.setuptools]
-license-files = ["LICENSE"]
+[project.urls]
+Repository = "https://github.com/CIRSS/yw-core.git"
 
 [tool.setuptools.dynamic]
-version = {attr = "yw_generator._version.__version__"}
-
-[project.urls]
-"Homepage" = "http://localhost:8000"
+version = {attr = "yw_core._version.__version__"}
 
 [build-system]
 requires = ["setuptools", "wheel"]
@@ -40,3 +45,8 @@ combine_as_imports = true
 skip_gitignore = true
 #skip = [""]  # use default settings for now
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+yw_core = ["builtin_funcs_and_vars.txt"]

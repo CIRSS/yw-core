@@ -1,105 +1,131 @@
-# yw_generator
+# yw_core
 
-This is a template project for generating YesWorkflow Syntax from Python code.
+Core elements of YesWorkflow in Python.
 
 ## Installation
 
 ```bash
 git clone <url>
-cd yw_generator
+cd yw_core
 pip install .
 ```
 
-### Python
+## An example using a Python notebook with 3 code cells
+Here is the example Python notebook that will be used as the running example to explain the CLI and Python API.
+```python
+# cell 1
+x = 1
 
-This returns the YesWorkflow syntax commented Python code:
+# cell 2
+func(x)
+
+# cell 3
+x
+```
+
+### CLI
 
 ```python
-import yw_generator
-yw = yw_generator.yw_generator('a = 1')
+Usage: yw [OPTIONS]
+
+Options:
+  -f, --filepath TEXT  Path of a Python notebook to extract YesWorkflow
+                       annotations  [required]
+  -u, --upper          Extract upper estimate of cell I/O sets for YesWorkflow
+                       annotations
+  --help               Show this message and exit.
 ```
 
-### Command Line
-
-This prints out the YesWorkflow syntax commented Python code:
+#### Lower estimate
 
 ```bash
-ywgenerator example.py
+yw -f YOUR_PYTHON_NOTEBOOK_PATH
 ```
 
----
+Expected output for lower estimate:
+```text
+# @BEGIN cell-1
+# @OUT x
+# @END cell-1
 
-## Ideas
+# @BEGIN cell-2
+# @IN x
+# @END cell-2
 
-- Make comments to `@BEGIN` and `@END` blocks
-- Have parameter for the depth of the graph, or simply use comments to segment the code. 
+# @BEGIN cell-3
+# @IN x
+# @END cell-3
+```
 
-## TODO
+#### Upper estimate
 
-- [ ] A working prototype.
-- [ ] Set up readthedocs
-- [ ] GitHub workflow for testing, code formatting and linting. 
-
-## Contributing Guide
-
-### First Step and Start Here
-
-- [ ] Make this work first:
-  ```bash
-  python yw_generator.py ../../tests/raw.py
-  ```
-
-### Using `tox` to Test, Do Code-Formatting, and Linting
-
-> I think we can ignore this testing and formatting section for now. Do this after we have a working prototype.
-
-We use [`tox`](https://tox.wiki/en/4.11.3/installation.html) to run:
-  - Python unit test ([`pytest`](https://docs.pytest.org/en/7.4.x/))
-  - Converting old string to f-string ([`flynt`](https://github.com/ikamensh/flynt#flynt---string-formatting-converter))
-  - Code formatting ([`black`](https://black.readthedocs.io/en/stable/))
-  - Sort import order ([`isort`](https://pycqa.github.io/isort/index.html))
-  - Linting ([`flake8`](https://flake8.pycqa.org/en/latest/))
-
-#### Python Unit test
 ```bash
+yw -f YOUR_PYTHON_NOTEBOOK_PATH -u
+```
+
+Expected output for upper estimate:
+```
+# @BEGIN cell-1
+# @OUT x
+# @END cell-1
+
+# @BEGIN cell-2
+# @IN x
+# @OUT x @AS x-1
+# @END cell-2
+
+# @BEGIN cell-3
+# @IN x @AS x-1
+# @END cell-3
+```
+
+### Python API
+
+#### Lower estimate
+```python
+from yw_core.yw_core import extract_code_cells, extract_records, records2annotations
+code_cells = extract_code_cells("YOUR_PYTHON_NOTEBOOK_PATH")
+records = extract_records(code_cells, is_upper_estimate=False)
+annotations = records2annotations(records)
+```
+
+Expected outputs for lower estimate:
+```python
+code_cells = ['x = 1', 'func(x)', 'x']
+records = [
+  {'inputs': set(), 'output_candidates': {'x'}, 'refers_code': set(), 'defines_code': set(), 'alias_stmt': None, 'alias_vars': set(), 'outputs': {'x'}}, 
+  {'inputs': {'x'}, 'output_candidates': set(), 'refers_code': set(), 'defines_code': set(), 'alias_stmt': None, 'alias_vars': set(), 'outputs': set()}, 
+  {'inputs': {'x'}, 'output_candidates': set(), 'refers_code': set(), 'defines_code': set(), 'alias_stmt': None, 'alias_vars': set(), 'outputs': set()}
+]
+annotations = '# @BEGIN cell-1\n# @OUT x\n# @END cell-1\n\n# @BEGIN cell-2\n# @IN x\n# @END cell-2\n\n# @BEGIN cell-3\n# @IN x\n# @END cell-3'
+```
+
+#### Upper estimate
+```python
+from yw_core.yw_core import extract_code_cells, extract_records, records2annotations
+code_cells = extract_code_cells("YOUR_PYTHON_NOTEBOOK_PATH")
+records = extract_records(code_cells, is_upper_estimate=True)
+annotations = records2annotations(records)
+```
+
+Expected outputs for upper estimate:
+```python
+code_cells = ['x = 1', 'func(x)', 'x']
+records = [
+  {'inputs': set(), 'output_candidates': {'x'}, 'refers_code': set(), 'defines_code': set(), 'alias_stmt': None, 'alias_vars': set(), 'outputs': {'x'}}, 
+  {'inputs': {'x'}, 'output_candidates': {'x'}, 'refers_code': set(), 'defines_code': set(), 'alias_stmt': None, 'alias_vars': set(), 'outputs': {'x-1'}}, 
+  {'inputs': {'x-1'}, 'output_candidates': set(), 'refers_code': set(), 'defines_code': set(), 'alias_stmt': None, 'alias_vars': set(), 'outputs': set()}
+]
+annotations = '# @BEGIN cell-1\n# @OUT x\n# @END cell-1\n\n# @BEGIN cell-2\n# @IN x\n# @OUT x @AS x-1\n# @END cell-2\n\n# @BEGIN cell-3\n# @IN x @AS x-1\n# @END cell-3'
+```
+
+## Tests
+
+We use [`tox`](https://tox.wiki/en/4.11.3/installation.html) to run Python unit test ([`pytest`](https://docs.pytest.org/en/7.4.x/)):
+```bash
+# If you the tox package is not installed
+pip install tox
+
+# Run unit test
 tox
 ```
-
-#### Converting Old String to F-String
-```bash
-tox -e fstring
-```
-
-#### Code Formatting
-```bash
-tox -e format
-```
-
-#### Sort Import Order
-```bash
-tox -e sort_import
-```
-
-#### Linting
-```bash
-tox -e lint
-```
-
-### Pre-Commit
-
-We use [pre-commit](https://pre-commit.com/#install) to check code format and style before committing:
-  - Converting old string to f-string ([`flynt`](https://github.com/ikamensh/flynt#flynt---string-formatting-converter))
-  - Code formatting ([`black`](https://black.readthedocs.io/en/stable/))
-  - Sort import order ([`isort`](https://pycqa.github.io/isort/index.html))
-  - Linting ([`flake8`](https://flake8.pycqa.org/en/latest/))
-
-Set up pre-commit for the first time:
-```bash
-pre-commit install
-```
-
-Check every file:
-```bash
-pre-commit run --all-files
-```
-
