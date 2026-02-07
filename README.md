@@ -1,13 +1,11 @@
-# yw_core
+# yw-core
 
 Core elements of YesWorkflow in Python.
 
 ## Installation
 
 ```bash
-git clone <url>
-cd yw_core
-pip install .
+pip install yw-core
 ```
 
 ## An example using a Python notebook with 3 code cells
@@ -129,3 +127,7 @@ pip install tox
 # Run unit test
 tox
 ```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
